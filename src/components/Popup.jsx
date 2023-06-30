@@ -37,7 +37,7 @@ const Popup = ({ togglePopup }) => {
     if (Object.keys(errors).length === 0) {
       try {
         const response = await axios.post(
-          "http://stock.staging3.digitalregister.in:8080/api/v1/staff/add",
+          "https://stock.staging3.digitalregister.in:8080/api/v1/staff/add",
           {
             businessId: "VgwLq1sKrUdkxsSuTKEhEF5b8KG3",
             name: staffName,

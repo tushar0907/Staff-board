@@ -42,7 +42,7 @@ const ContentTable = () => {
   const handleRemoveStaff = (staffId) => {
     axios
       .delete(
-        `http://stock.staging3.digitalregister.in:8080/api/v1/staff/delete/${staffId}`
+        `https://stock.staging3.digitalregister.in:8080/api/v1/staff/delete/${staffId}`
       )
       .then((response) => {
         if (response.data.response) {
