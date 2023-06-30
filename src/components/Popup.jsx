@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import axios from "axios";
 
 const Popup = ({ togglePopup }) => {
@@ -8,6 +8,23 @@ const Popup = ({ togglePopup }) => {
   const [selectedStore, setSelectedStore] = useState("");
   const [selectedRole, setSelectedRole] = useState("");
   const [errorMessages, setErrorMessages] = useState({});
+  const [storeNames, setStoreNames] = useState([]);
+  const [selectedStoreId, setSelectedStoreId] = useState("");
+
+
+
+  useEffect(() => {
+    axios
+      .get("http://stock.staging3.digitalregister.in:8080/api/v1/store/getStore/VgwLq1sKrUdkxsSuTKEhEF5b8KG3")
+      .then((response) => {
+        const names = response.data.response.map((store) => store.name);
+        setStoreNames(names);
+      })
+      .catch((error) => {
+        console.error("Error fetching store names:", error);
+      });
+  }, []);
+
 
   const handleSave = async () => {
     const errors = {};
@@ -37,12 +54,13 @@ const Popup = ({ togglePopup }) => {
     if (Object.keys(errors).length === 0) {
       try {
         const response = await axios.post(
-          "https://stock.staging3.digitalregister.in:8080/api/v1/staff/add",
+          "http://stock.staging3.digitalregister.in:8080/api/v1/staff/add",
           {
             businessId: "VgwLq1sKrUdkxsSuTKEhEF5b8KG3",
             name: staffName,
             phone: mobileNumber,
             staffId: code,
+            storeId: selectedStoreId, // Add the selected store ID
           },
           {
             headers: {
@@ -50,6 +68,7 @@ const Popup = ({ togglePopup }) => {
             },
           }
         );
+        
 
         if (response.status !== 200) {
           throw new Error("Failed to add staff");
@@ -124,23 +143,30 @@ const Popup = ({ togglePopup }) => {
           </div>
         </div>
         <div className="flex p-5">
-          <div className="flex flex-col mx-4">
-            <p className="flex my-3">Select Store*</p>
-            <select
-              className="flex p-2 font-normal text-lg border-black border rounded-md h-[5vh] w-[20vw]"
-              value={selectedStore}
-              onChange={(e) => setSelectedStore(e.target.value)}
-            >
-              <option value="">-- Select Store --</option>
-              <option value="store1">Store A</option>
-              <option value="store2">Store B</option>
-              <option value="store1">Store C</option>
-              <option value="store2">Store D</option>
-            </select>
-            {errorMessages.selectedStore && (
-              <p className="text-red-500">{errorMessages.selectedStore}</p>
-            )}
-          </div>
+        <div className="flex flex-col mx-4">
+          <p className="flex my-3">Select Store*</p>
+          <select
+  className="flex p-2 font-normal text-lg border-black border rounded-md h-[5vh] w-[20vw]"
+  value={selectedStore}
+  onChange={(e) => {
+    const selectedStoreId = storeNames.find(
+      (store) => store === e.target.value
+    )?.storeId;
+    setSelectedStore(e.target.value);
+    setSelectedStoreId(selectedStoreId);
+  }}
+>
+  <option value="">-- Select Store --</option>
+  {storeNames.map((storeName, index) => (
+    <option key={index} value={storeName}>
+      {storeName}
+    </option>
+  ))}
+</select>
+          {errorMessages.selectedStore && (
+            <p className="text-red-500">{errorMessages.selectedStore}</p>
+          )}
+        </div>
           <div className="flex flex-col">
             <p className="flex my-3 mx-3">Staff Role*</p>
             <select

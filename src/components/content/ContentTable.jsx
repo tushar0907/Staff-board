@@ -6,6 +6,8 @@ const ContentTable = () => {
   const [staffData, setStaffData] = useState([]);
   const [showPopup, setShowPopup] = useState(false);
   const [selectedStaff, setSelectedStaff] = useState(null);
+  const [storeNames, setStoreNames] = useState([]);
+  const [selectedStore, setSelectedStore] = useState(null);
 
   useEffect(() => {
     axios
@@ -14,15 +16,38 @@ const ContentTable = () => {
       })
       .then((response) => {
         setStaffData(response.data.response);
-        localStorage.setItem(
-          "staffData",
-          JSON.stringify(response.data.response)
-        );
+        localStorage.setItem("staffData", JSON.stringify(response.data.response));
       })
       .catch((error) => {
         console.error("Error fetching staff data:", error);
       });
+
+    axios
+      .get("http://stock.staging3.digitalregister.in:8080/api/v1/store/getStore/VgwLq1sKrUdkxsSuTKEhEF5b8KG3")
+      .then((response) => {
+        const names = response.data.response.map((store) => store.name);
+        setStoreNames(names);
+      })
+      .catch((error) => {
+        console.error("Error fetching store names:", error);
+      });
   }, []);
+
+  useEffect(() => {
+    if (selectedStore) {
+      axios
+        .get(`http://stock.staging3.digitalregister.in:8080/api/v2/staffAccess/get/${selectedStore.storeId}`)
+        .then((response) => {
+          // Extract staff details for the selected store from the response
+          const staffDetails = response.data.storeManagerModels.map((managerModel) => managerModel.staffModel);
+          setStaffData(staffDetails);
+          localStorage.setItem("staffData", JSON.stringify(staffDetails));
+        })
+        .catch((error) => {
+          console.error("Error fetching staff details for the store:", error);
+        });
+    }
+  }, [selectedStore]);
 
   const handleRemoveRole = (staffId) => {
     const updatedStaffData = staffData.map((staff) => {
@@ -42,7 +67,7 @@ const ContentTable = () => {
   const handleRemoveStaff = (staffId) => {
     axios
       .delete(
-        `https://stock.staging3.digitalregister.in:8080/api/v1/staff/delete/${staffId}`
+        `http://stock.staging3.digitalregister.in:8080/api/v1/staff/delete/${staffId}`
       )
       .then((response) => {
         if (response.data.response) {
@@ -63,16 +88,23 @@ const ContentTable = () => {
     setShowPopup(!showPopup);
   };
 
+  const handleStoreSelection = (store) => {
+    setSelectedStore(store);
+  };
+  
+
   return (
     <div className="flex w-full flex-col h-full">
       <div className="flex h-[7vh]">
-        <div className="flex h-full text-[] w-[14vw] justify-between items-center p-4">
-          <div className="flex cursor-pointer text-[#bfa2a2] hover:text-white border border-[#bfa2a2] hover:bg-[#1702fe] h-[4vh] w-[6vw] font-medium justify-center items-center rounded-full">
-            Store A
-          </div>
-          <div className="flex cursor-pointer border border-[#bfa2a2] text-[#bfa2a2] hover:text-white hover:bg-[#1702fe] h-[4vh] w-[6vw] font-medium justify-center items-center rounded-full">
-            Store B
-          </div>
+        <div className="flex h-full w-9/12 justify-between items-center p-4">
+        {storeNames.map((storeName, index) => (
+            <div
+              key={index}
+              className="flex cursor-pointer text-[#bfa2a2] hover:text-white border border-[#bfa2a2] hover:bg-[#1702fe] h-[4vh] w-[6vw] font-medium justify-center items-center rounded-full"
+            >
+              {storeName}
+            </div>
+          ))}
         </div>
       </div>
       <div className="flex flex-1">
