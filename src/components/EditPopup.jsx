@@ -39,7 +39,7 @@ const EditPopup = ({ togglePopup, staff }) => {
         const response = await axios.post(
           "http://stock.staging3.digitalregister.in:8080/api/v1/staff/update",
           {
-            businessId: "VgwLq1sKrUdkxsSuTKEhEF5b8KG3",
+            businessId: "QeeRxCF1SLN9cVg9AMGj7bxLiKy2",
             name: staffName,
             phone: mobileNumber,
             staffId: code,

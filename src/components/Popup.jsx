@@ -60,7 +60,7 @@ const Popup = ({ togglePopup }) => {
             name: staffName,
             phone: mobileNumber,
             staffId: code,
-            storeId: selectedStoreId, // Add the selected store ID
+            storeId: selectedStoreId, 
           },
           {
             headers: {

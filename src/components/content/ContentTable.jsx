@@ -1,87 +1,12 @@
-import React, { useEffect, useState } from "react";
-import axios from "axios";
+import React, { useState } from "react";
 import EditPopup from "../EditPopup";
+import { useAppContext } from "../../context";
 
 const ContentTable = () => {
-  const [staffData, setStaffData] = useState([]);
   const [showPopup, setShowPopup] = useState(false);
   const [selectedStaff, setSelectedStaff] = useState(null);
-  const [storeNames, setStoreNames] = useState([]);
-  const [selectedStore, setSelectedStore] = useState(null);
 
-  useEffect(() => {
-    axios
-      .post("http://stock.staging3.digitalregister.in:8080/api/v1/staff/get", {
-        businessIds: ["VgwLq1sKrUdkxsSuTKEhEF5b8KG3"],
-      })
-      .then((response) => {
-        setStaffData(response.data.response);
-        localStorage.setItem("staffData", JSON.stringify(response.data.response));
-      })
-      .catch((error) => {
-        console.error("Error fetching staff data:", error);
-      });
-
-    axios
-      .get("http://stock.staging3.digitalregister.in:8080/api/v1/store/getStore/VgwLq1sKrUdkxsSuTKEhEF5b8KG3")
-      .then((response) => {
-        const names = response.data.response.map((store) => store.name);
-        setStoreNames(names);
-      })
-      .catch((error) => {
-        console.error("Error fetching store names:", error);
-      });
-  }, []);
-
-  useEffect(() => {
-    if (selectedStore) {
-      axios
-        .get(`http://stock.staging3.digitalregister.in:8080/api/v2/staffAccess/get/${selectedStore.storeId}`)
-        .then((response) => {
-          // Extract staff details for the selected store from the response
-          const staffDetails = response.data.storeManagerModels.map((managerModel) => managerModel.staffModel);
-          setStaffData(staffDetails);
-          localStorage.setItem("staffData", JSON.stringify(staffDetails));
-        })
-        .catch((error) => {
-          console.error("Error fetching staff details for the store:", error);
-        });
-    }
-  }, [selectedStore]);
-
-  const handleRemoveRole = (staffId) => {
-    const updatedStaffData = staffData.map((staff) => {
-      if (staff.staffId === staffId) {
-        return {
-          ...staff,
-          role: "No Role",
-        };
-      }
-      return staff;
-    });
-
-    setStaffData(updatedStaffData);
-    localStorage.setItem("staffData", JSON.stringify(updatedStaffData));
-  };
-
-  const handleRemoveStaff = (staffId) => {
-    axios
-      .delete(
-        `http://stock.staging3.digitalregister.in:8080/api/v1/staff/delete/${staffId}`
-      )
-      .then((response) => {
-        if (response.data.response) {
-          const updatedStaffData = staffData.filter(
-            (staff) => staff.staffId !== staffId
-          );
-          setStaffData(updatedStaffData);
-          localStorage.setItem("staffData", JSON.stringify(updatedStaffData));
-        }
-      })
-      .catch((error) => {
-        console.error("Error deleting staff:", error);
-      });
-  };
+  const { handleRemoveRole, handleRemoveStaff, stores, users, setSelectedStore, selectedStore, activeRoles } = useAppContext();
 
   const togglePopup = (staff) => {
     setSelectedStaff(staff);
@@ -91,18 +16,18 @@ const ContentTable = () => {
   const handleStoreSelection = (store) => {
     setSelectedStore(store);
   };
-  
 
   return (
     <div className="flex w-full flex-col h-full">
       <div className="flex h-[7vh]">
         <div className="flex h-full w-9/12 justify-between items-center p-4">
-        {storeNames.map((storeName, index) => (
+          {stores?.map((store, index) => (
             <div
               key={index}
-              className="flex cursor-pointer text-[#bfa2a2] hover:text-white border border-[#bfa2a2] hover:bg-[#1702fe] h-[4vh] w-[6vw] font-medium justify-center items-center rounded-full"
+              onClick={() => setSelectedStore(store)}
+              className={`flex cursor-pointer text-[#bfa2a2] hover:text-white border border-[#bfa2a2] hover:bg-[#1702fe] ${selectedStore?.storeId === store.storeId && "bg-[#1702fe] text-white"} h-[4vh] w-[6vw] font-medium justify-center items-center rounded-full`}
             >
-              {storeName}
+              {store.name}
             </div>
           ))}
         </div>
@@ -111,26 +36,31 @@ const ContentTable = () => {
         <div className="flex">
           <table className="flex flex-col w-full pl-6">
             <thead className="flex bg-gray-300 h-[5vh] border-l border-r border-gray-300 w-[80vw]">
-              <tr className="flex items-center w-[26vw] justify-between pl-3">
-                <th>Staff</th>
-                <th>Mobile Number</th>
-                <th>Role</th>
+              <tr className="flex items-center w-[28vw] justify-between pl-3">
+                <th className="flex flex-1">Staff</th>
+                <th className="flex flex-1">Mobile Number</th>
+                <th className="flex flex-1">Role</th>
               </tr>
             </thead>
             <tbody className="flex flex-col border-b border-l border-r border-gray-300 w-[80vw]">
-              {staffData.map((staff) => (
-                <div className="flex h-[8vh]">
-                  <React.Fragment key={staff.staffId}>
-                  <tr
-                    key={staff.staffId}
-                    className="flex w-[28vw] justify-between pl-3 items-center"
-                  >
-                    <td className="flex items-center h-full w-[9vw]">{staff.name}</td>
-                    <td className="flex items-center h-full w-[9vw]">{staff.mobile}</td>
-                    <td className="flex items-center h-full w-[9vw] justify-end">{staff.role}</td>
+              {users?.map((staff) => (
+                <div
+                  className="flex h-[8vh] border border-b"
+                  key={staff.staffId}
+                >
+                  <tr className="flex w-[28vw] justify-between pl-3 items-center">
+                    <td className="flex items-center h-full w-[9vw]">
+                      {staff.name}
+                    </td>
+                    <td className="flex items-center h-full w-[9vw]">
+                      {staff.mobile}
+                    </td>
+                    <td className="flex items-center text-[16px] h-full w-[9vw] justify-start pr-4">
+                      {activeRoles?.find(user => user.mobile === staff.mobile)?.role?.replaceAll("_", " ") || "No Role"}
+                    </td>
                   </tr>
 
-                  <tr className="flex flex-1 justify-end items-start">
+                  <tr className="flex flex-1 opacity-0 hover:opacity-100 justify-end items-start">
                     <td className="flex h-full">
                       <div className="flex text-sm justify-end items-center w-[37vw] pr-4">
                         <div className="flex w-[23vw] h-[3.6vh] justify-between">
@@ -143,8 +73,9 @@ const ContentTable = () => {
                             </button>
                           )}
                           <button
-                          onClick={() => togglePopup(staff)}
-                          className="flex p-2  h-full rounded-md items-center border border-black">
+                            onClick={() => togglePopup(staff)}
+                            className="flex p-2  h-full rounded-md items-center border border-black"
+                          >
                             Change Role
                           </button>
                           <button
@@ -164,7 +95,6 @@ const ContentTable = () => {
                       </div>
                     </td>
                   </tr>
-                </React.Fragment>
                 </div>
               ))}
             </tbody>

@@ -1,13 +1,14 @@
 import React from "react";
 import Home from "./components/home";
-
-
+import { Provider } from "./context";
 
 function App() {
   return (
-    <div className="flex w-full h-full">
-      <Home />
-     </div>
+    <Provider>
+      <div className="flex w-full h-full">
+        <Home />
+      </div>
+    </Provider>
   );
 }
 
